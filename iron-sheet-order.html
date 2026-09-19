@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アイロンシート 在庫一覧・ご注文フォーム</title>
+<style>
+  :root {
+    --bg: #fafafa;
+    --card: #ffffff;
+    --text: #333333;
+    --sub: #777777;
+    --border: #dddddd;
+    --accent: #5b8fc7;
+    --accent-light: #eaf1f9;
+    --danger: #d9534f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Meiryo, "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 16px;
+    line-height: 1.6;
+  }
+  .container {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 1.3em;
+    margin: 8px 0 4px;
+    text-align: center;
+  }
+  .lead {
+    font-size: 0.9em;
+    color: var(--sub);
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    gap: 10px;
+  }
+  .row:last-child { border-bottom: none; }
+  .color-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .color-name {
+    font-size: 1em;
+  }
+  .stock {
+    font-size: 0.8em;
+    color: var(--sub);
+  }
+  .stock.low {
+    color: var(--danger);
+  }
+  .qty-input {
+    width: 56px;
+    padding: 6px;
+    font-size: 1em;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    text-align: center;
+  }
+  .row.soldout {
+    opacity: 0.45;
+  }
+  .row.soldout .qty-input {
+    pointer-events: none;
+    background: #f0f0f0;
+  }
+  .soldout-label {
+    font-size: 0.8em;
+    color: var(--sub);
+  }
+  button {
+    font-family: inherit;
+    font-size: 1em;
+    padding: 10px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    width: 100%;
+  }
+  .btn-primary:active { opacity: 0.85; }
+  .btn-secondary {
+    background: #eee;
+    color: var(--text);
+    width: 100%;
+    margin-top: 8px;
+  }
+  .result {
+    display: none;
+    margin-top: 20px;
+  }
+  .result.show { display: block; }
+  .result-box {
+    background: var(--accent-light);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .result-box textarea {
+    width: 100%;
+    min-height: 120px;
+    font-family: Meiryo, "Hiragino Sans", sans-serif;
+    font-size: 0.95em;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    resize: vertical;
+    background: #fff;
+    color: var(--text);
+  }
+  .copy-msg {
+    font-size: 0.85em;
+    color: var(--accent);
+    margin-top: 6px;
+    display: none;
+  }
+  .copy-msg.show { display: inline; }
+  .empty-msg {
+    font-size: 0.9em;
+    color: var(--danger);
+    text-align: center;
+    margin-top: 8px;
+    display: none;
+  }
+  .empty-msg.show { display: block; }
+  .note {
+    font-size: 0.8em;
+    color: var(--sub);
+    margin-top: 20px;
+  }
+  .consult-card {
+    background: #f4f4f4;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+  }
+  .consult-title {
+    font-size: 0.95em;
+    color: var(--text);
+    font-weight: bold;
+    margin-bottom: 6px;
+  }
+  .consult-desc {
+    font-size: 0.8em;
+    color: var(--sub);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+  .consult-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+  }
+  .consult-table th {
+    text-align: left;
+    color: var(--sub);
+    font-weight: normal;
+    padding: 4px 4px;
+    border-bottom: 1px solid #ddd;
+  }
+  .consult-table td {
+    padding: 6px 4px;
+    color: var(--text);
+    border-bottom: 1px dashed #ddd;
+  }
+  .consult-table tr:last-child td {
+    border-bottom: none;
+  }
+  .consult-table td.num,
+  .consult-table th.num {
+    text-align: right;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>アイロンシート 在庫一覧・ご注文フォーム</h1>
+  <ol class="lead" style="text-align:left; display:inline-block; margin:0 auto 20px; padding-left:1.3em;">
+    <li>ご希望のカラーと枚数をお選びの上、「注文内容を作る」を押してください</li>
+    <li>表示されたテキストと、アイロンシート屋さんで選んだ希望デザインのスクリーンショットを、DMで送ってください</li>
+    <li>内容を確認して、専用の注文ページをお作りしてご案内します</li>
+  </ol>
+  <div style="text-align:center;"></div>
+
+  <div class="card" id="colorList"></div>
+
+  <div class="consult-card">
+    <div class="consult-title">【要相談カラー】</div>
+    <div class="consult-desc">※A4サイズではありません。<br>下記の長さで残っています。<br>ご希望の方はDMでご相談ください。</div>
+    <table class="consult-table">
+      <thead>
+        <tr>
+          <th>カラー</th>
+          <th class="num">長さ</th>
+          <th class="num">残り</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>オレンジ</td><td class="num">19cm</td><td class="num">3枚</td></tr>
+        <tr><td>蛍光イエロー</td><td class="num">19cm</td><td class="num">4枚</td></tr>
+        <tr><td>蛍光オレンジ</td><td class="num">19cm</td><td class="num">2枚</td></tr>
+        <tr><td>蛍光ピンク</td><td class="num">19cm</td><td class="num">2枚</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button class="btn-primary" id="makeOrderBtn">注文内容を作る</button>
+  <p class="empty-msg" id="emptyMsg">枚数が1枚以上選ばれている色がありません。</p>
+
+  <div class="result" id="result">
+    <div class="result-box">
+      <p style="margin-top:0;">以下の内容をコピーして、アイロンシート屋さんで選んだ希望デザインのスクリーンショットと一緒に、DMで送ってください。</p>
+      <textarea id="resultText" readonly></textarea><br>
+      <button class="btn-secondary" id="copyBtn">コピーする</button>
+      <span class="copy-msg" id="copyMsg">コピーしました！</span>
+    </div>
+  </div>
+
+  <p class="note">※ この一覧は表示された時点の在庫数です。他のお客様と同時に注文があった場合、在庫数が前後することがあります。あらかじめご了承ください。</p>
+</div>
+
+<script>
+  const stockData = [
+    { name: "ブラック", stock: 6 },
+    { name: "ホワイト", stock: 9 },
+    { name: "グレー", stock: 3 },
+    { name: "ゴールド", stock: 2 },
+    { name: "ブラウン", stock: 9 },
+    { name: "フォレストグリーン", stock: 3 },
+    { name: "カーキ", stock: 3 },
+    { name: "ネイビーブルー", stock: 3 },
+    { name: "ブルー", stock: 2 },
+    { name: "ラベンダー", stock: 2 },
+    { name: "ダークグレー", stock: 9 },
+    { name: "シャンパーニュ", stock: 2 },
+    { name: "蛍光グリーン", stock: 1 },
+    { name: "蛍光ピンク", stock: 1 },
+    { name: "グリッターブラック", stock: 1 },
+    { name: "グリッターホワイト", stock: 4 },
+    { name: "グリッターゴールド", stock: 5 },
+    { name: "グリッターブルー", stock: 1 },
+    { name: "グリッターパープル", stock: 1 }
+  ];
+
+  const listEl = document.getElementById('colorList');
+
+  stockData.forEach((item, idx) => {
+    const row = document.createElement('div');
+    row.className = 'row' + (item.stock <= 0 ? ' soldout' : '');
+
+    const info = document.createElement('div');
+    info.className = 'color-info';
+    const nameEl = document.createElement('div');
+    nameEl.className = 'color-name';
+    nameEl.textContent = item.name;
+    info.appendChild(nameEl);
+
+    if (item.stock <= 0) {
+      const soldout = document.createElement('div');
+      soldout.className = 'soldout-label';
+      soldout.textContent = '在庫なし';
+      info.appendChild(soldout);
+    } else {
+      const stockEl = document.createElement('div');
+      stockEl.className = 'stock' + (item.stock <= 2 ? ' low' : '');
+      stockEl.textContent = '残り ' + item.stock + ' 枚';
+      info.appendChild(stockEl);
+    }
+
+    row.appendChild(info);
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'qty-input';
+    input.min = 0;
+    input.max = item.stock;
+    input.value = 0;
+    input.dataset.idx = idx;
+    input.addEventListener('input', () => {
+      let v = parseInt(input.value, 10);
+      if (isNaN(v) || v < 0) v = 0;
+      if (v > item.stock) v = item.stock;
+      input.value = v;
+    });
+    row.appendChild(input);
+
+    listEl.appendChild(row);
+  });
+
+  document.getElementById('makeOrderBtn').addEventListener('click', () => {
+    const inputs = listEl.querySelectorAll('.qty-input');
+    const lines = [];
+    inputs.forEach(input => {
+      const qty = parseInt(input.value, 10) || 0;
+      if (qty > 0) {
+        const idx = parseInt(input.dataset.idx, 10);
+        lines.push(stockData[idx].name + ', ' + qty);
+      }
+    });
+
+    const emptyMsg = document.getElementById('emptyMsg');
+    const result = document.getElementById('result');
+
+    if (lines.length === 0) {
+      emptyMsg.classList.add('show');
+      result.classList.remove('show');
+      return;
+    }
+    emptyMsg.classList.remove('show');
+
+    document.getElementById('resultText').value = lines.join('\n');
+    result.classList.add('show');
+    document.getElementById('copyMsg').classList.remove('show');
+    result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const text = document.getElementById('resultText');
+    text.select();
+    text.setSelectionRange(0, 99999);
+    const copyMsg = document.getElementById('copyMsg');
+    navigator.clipboard.writeText(text.value).then(() => {
+      copyMsg.classList.add('show');
+    }).catch(() => {
+      try {
+        document.execCommand('copy');
+        copyMsg.classList.add('show');
+      } catch (e) {
+        alert('コピーできませんでした。手動で選択してコピーしてください。');
+      }
+    });
+  });
+</script>
+</body>
+</html>
